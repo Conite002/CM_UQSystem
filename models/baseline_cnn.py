@@ -18,8 +18,3 @@ class BaselineCNN(nn.Module):
         x = F.relu(self.fc1(x))
         x = self.fc2(x)
         return x
-
-if __name__ == "__main__":
-    model = BaselineCNN()
-    x = torch.randn(1, 1, 28, 28)
-    print(model(x).shape)
