@@ -104,7 +104,7 @@ def train_and_save_ensemble(dataset_name, num_models=5, epochs=5, batch_size=128
     print("All ensemble models trained and saved successfully!")
 
 # Step 5: Load Trained Models for Inference
-def load_ensemble_models(num_models=5, save_dir="checkpoints/ensemble_models", device="cpu"):
+def load_ensemble_models(num_models=5, save_dir="../checkpoints/ensemble_models", device="cpu"):
     models = []
     for i in range(num_models):
         set_seed
@@ -162,10 +162,10 @@ def plot_variance(variance, title="Predictive Variance Distribution"):
     plt.show()
 
 if __name__ == "__main__":
-    datasets = ["mnist", "cifar10"]
+    datasets = ["mnist"]
     for dataset in datasets:
-        train_and_save_ensemble(dataset, num_models=5, epochs=5, batch_size=128, save_dir="checkpoints/ensemble_models", weight_method="xavier", data_variation=True)
-        models = load_ensemble_models(num_models=5, save_dir="checkpoints/ensemble_models", device="cpu")
+        train_and_save_ensemble(dataset, num_models=5, epochs=5, batch_size=128, save_dir="../checkpoints/ensemble_models", weight_method="xavier", data_variation=True)
+        models = load_ensemble_models(num_models=5, save_dir="../checkpoints/ensemble_models", device="cpu")
         test_loader, _ = load_dataset(dataset, batch_size=128, train=False)
         accuracy, f1, recall, precision, variance = ensemble_predict(models, test_loader, device="cpu")
         # save results
