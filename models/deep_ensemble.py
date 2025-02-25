@@ -1,4 +1,5 @@
-import os
+import os, sys
+sys.path.append("..")
 import torch
 import torch.optim as optim
 import torch.nn as nn
@@ -11,7 +12,16 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 from sklearn.metrics import accuracy_score, f1_score, recall_score, precision_score
 import matplotlib.pyplot as plt
 import seaborn as sns
+import random
 
+def set_seed(seed):
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    np.random.seed(seed)
+    random.seed(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    
 def train_model(model, train_loader, epochs, device, model_path, weight_init=None):
     """
     Train a single model with optional weight initialization.
@@ -77,12 +87,11 @@ def train_and_save_ensemble(dataset_name, num_models=5, epochs=5, batch_size=128
     selected_weight_init = weight_init_methods.get(weight_method, None)
 
     for i in range(num_models):
-        print(f"= Training model {i+1}/{num_models} with {weight_method} initialization...")
+        print(f" Training model {i+1}/{num_models} with {weight_method} initialization...")
 
         model = BaselineCNN()
-        model_path = os.path.join(save_dir, f"model_{i}.pth")
+        model_path = os.path.join(save_dir, f"model_{i}_{set_seed(10 + i)}.pth")
 
-        # Generate a unique DataLoader per model for different batch sampling
         train_loader, _ = load_dataset(dataset_name, batch_size) if data_variation else load_dataset(dataset_name, batch_size, fixed=True)
 
         p = mp.Process(target=train_model, args=(model, train_loader, epochs, device, model_path, selected_weight_init))
@@ -98,6 +107,7 @@ def train_and_save_ensemble(dataset_name, num_models=5, epochs=5, batch_size=128
 def load_ensemble_models(num_models=5, save_dir="checkpoints/ensemble_models", device="cpu"):
     models = []
     for i in range(num_models):
+        set_seed
         model = BaselineCNN()
         model.load_state_dict(torch.load(os.path.join(save_dir, f"model_{i}.pth"), map_location=device))
         model.to(device)
@@ -140,7 +150,7 @@ def ensemble_predict(models, test_loader, device):
     print(f"Ensemble Accuracy: {accuracy:.4f}, F1-Score: {f1:.4f}, Recall: {recall:.4f}, Precision: {precision:.4f}")
     return accuracy, f1, recall, precision, variance
 
-# =Ì Step 7: Visualize Predictive Variance
+# Step 7: Visualize Predictive Variance
 def plot_variance(variance, title="Predictive Variance Distribution"):
     var_mean = variance.mean(dim=1).cpu().numpy()
 
