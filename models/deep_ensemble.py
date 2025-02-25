@@ -79,6 +79,7 @@ def normal_init(m):
 
 # Step 4: Train and Save an Ensemble of Models with Data & Initialization Variation
 def train_and_save_ensemble(dataset_name, num_models=5, epochs=5, batch_size=128, save_dir="checkpoints/ensemble_models", weight_method="xavier", data_variation=True):
+    save_dir = os.path.abspath(os.path.join(os.getcwd(), save_dir))
     os.makedirs(save_dir, exist_ok=True)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -164,11 +165,18 @@ def plot_variance(variance, title="Predictive Variance Distribution"):
 if __name__ == "__main__":
     datasets = ["mnist"]
     for dataset in datasets:
-        train_and_save_ensemble(dataset, num_models=5, epochs=5, batch_size=128, save_dir="../../checkpoints/ensemble_models", weight_method="xavier", data_variation=True)
-        models = load_ensemble_models(num_models=5, save_dir="../../checkpoints/ensemble_models", device="cpu")
+        base_path = os.path.abspath("CM_UQSystem")
+        save_dir = os.path.join(base_path, "checkpoints", "ensemble_models")
+        results_dir = os.path.join(base_path, "results")
+        
+        os.makedirs(results_dir, exist_ok=True)  
+
+        train_and_save_ensemble(dataset, num_models=5, epochs=5, batch_size=128, save_dir=save_dir, weight_method="xavier", data_variation=True)
+        models = load_ensemble_models(num_models=5, save_dir=save_dir, device="cpu")
+
         test_loader, _ = load_dataset(dataset, batch_size=128, train=False)
         accuracy, f1, recall, precision, variance = ensemble_predict(models, test_loader, device="cpu")
-        # save results
-        np.save(f"../../results/{dataset}_variance.npy", variance.cpu().numpy())
+        np.save(os.path.join(results_dir, f"{dataset}_variance.npy"), variance.cpu().numpy())
         plot_variance(variance, title=f"{dataset.upper()} Predictive Variance Distribution")
+
     
