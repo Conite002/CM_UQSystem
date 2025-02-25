@@ -47,7 +47,7 @@ def train_model(model, train_loader, epochs, device, model_path, weight_init=Non
         accuracy = correct / total
         scheduler.step(epoch_loss)
 
-        print(f"=Ê Epoch {epoch+1}/{epochs} - Loss: {epoch_loss:.4f}, Accuracy: {accuracy:.4f}")
+        print(f"Epoch {epoch+1}/{epochs} - Loss: {epoch_loss:.4f}, Accuracy: {accuracy:.4f}")
 
     torch.save(model.state_dict(), model_path)
 
@@ -67,7 +67,7 @@ def normal_init(m):
     if isinstance(m, nn.Conv2d) or isinstance(m, nn.Linear):
         nn.init.normal_(m.weight, mean=0, std=0.1)
 
-# =Ì Step 4: Train and Save an Ensemble of Models with Data & Initialization Variation
+# Step 4: Train and Save an Ensemble of Models with Data & Initialization Variation
 def train_and_save_ensemble(dataset_name, num_models=5, epochs=5, batch_size=128, save_dir="checkpoints/ensemble_models", weight_method="xavier", data_variation=True):
     os.makedirs(save_dir, exist_ok=True)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -92,9 +92,9 @@ def train_and_save_ensemble(dataset_name, num_models=5, epochs=5, batch_size=128
     for p in processes:
         p.join()
 
-    print(" All ensemble models trained and saved successfully!")
+    print("All ensemble models trained and saved successfully!")
 
-# =Ì Step 5: Load Trained Models for Inference
+# Step 5: Load Trained Models for Inference
 def load_ensemble_models(num_models=5, save_dir="checkpoints/ensemble_models", device="cpu"):
     models = []
     for i in range(num_models):
@@ -105,7 +105,7 @@ def load_ensemble_models(num_models=5, save_dir="checkpoints/ensemble_models", d
         models.append(model)
     return models
 
-# =Ì Step 6: Ensemble Prediction with Performance Metrics
+# Step 6: Ensemble Prediction with Performance Metrics
 def ensemble_predict(models, test_loader, device):
     """
     Perform inference using ensemble models and return:
@@ -137,7 +137,7 @@ def ensemble_predict(models, test_loader, device):
     recall = recall_score(all_labels, predicted_classes, average="weighted")
     precision = precision_score(all_labels, predicted_classes, average="weighted")
 
-    print(f" Ensemble Accuracy: {accuracy:.4f}, F1-Score: {f1:.4f}, Recall: {recall:.4f}, Precision: {precision:.4f}")
+    print(f"Ensemble Accuracy: {accuracy:.4f}, F1-Score: {f1:.4f}, Recall: {recall:.4f}, Precision: {precision:.4f}")
     return accuracy, f1, recall, precision, variance
 
 # =Ì Step 7: Visualize Predictive Variance
@@ -151,22 +151,14 @@ def plot_variance(variance, title="Predictive Variance Distribution"):
     plt.ylabel("Frequency")
     plt.show()
 
-# =Ì Step 8: Run Training and Evaluation
 if __name__ == "__main__":
-    dataset_name = "MNIST"  # Change to CIFAR or custom dataset
-    num_models = 5
-    epochs = 5
-    batch_size = 128
-    weight_method = "xavier"  # Choose between "xavier", "he", "normal"
-    data_variation = True  # Set to False if using the same data batches for all models
-
-    train_and_save_ensemble(dataset_name, num_models=num_models, epochs=epochs, batch_size=batch_size, weight_method=weight_method, data_variation=data_variation)
-
-    models = load_ensemble_models(num_models=num_models)
-
-    _, test_loader = load_dataset(dataset_name, batch_size)
-
-    accuracy, f1, recall, precision, variance = ensemble_predict(models, test_loader, "cuda")
-
-    # Plot variance to visualize uncertainty
-    plot_variance(variance, title="Predictive Variance Across Ensemble Models")
+    datasets = ["mnist", "cifar10"]
+    for dataset in datasets:
+        train_and_save_ensemble(dataset, num_models=5, epochs=5, batch_size=128, save_dir="checkpoints/ensemble_models", weight_method="xavier", data_variation=True)
+        models = load_ensemble_models(num_models=5, save_dir="checkpoints/ensemble_models", device="cpu")
+        test_loader, _ = load_dataset(dataset, batch_size=128, train=False)
+        accuracy, f1, recall, precision, variance = ensemble_predict(models, test_loader, device="cpu")
+        # save results
+        np.save(f"results/{dataset}_variance.npy", variance.cpu().numpy())
+        plot_variance(variance, title=f"{dataset.upper()} Predictive Variance Distribution")
+    
