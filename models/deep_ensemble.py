@@ -169,6 +169,6 @@ if __name__ == "__main__":
         test_loader, _ = load_dataset(dataset, batch_size=128, train=False)
         accuracy, f1, recall, precision, variance = ensemble_predict(models, test_loader, device="cpu")
         # save results
-        np.save(f"results/{dataset}_variance.npy", variance.cpu().numpy())
+        np.save(f"../results/{dataset}_variance.npy", variance.cpu().numpy())
         plot_variance(variance, title=f"{dataset.upper()} Predictive Variance Distribution")
     
